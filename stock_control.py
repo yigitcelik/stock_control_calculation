@@ -17,6 +17,18 @@ req_data['req_date'] = pd.to_datetime(req_data['req_date'])
 req_data['arrival_date'] = pd.to_datetime(req_data['arrival_date'])
 
 
+status_dict = {
+    'PO':'SAS a bagli', 
+    'PR':'SAT durumunda', 
+    'QMprt':'Kalitede', 
+    'ProdOrd':'Uretim Siparisinde',
+    'PlnOrd':'uretim siparisi veya sat yaratilmasi gerekli', 
+    'ProjecS':'stokta',
+    'stock':'anonim stokta'
+}
+
+
+
 sorted_req_data = req_data.sort_values(by=['req_date'],ascending=True)
 
 def stock_calculation(df):
@@ -34,9 +46,22 @@ def stock_calculation(df):
         else : 
             return f'{req_ty-stock_qty} each short'
 
+def assign_status(df):
+    if df['incoming_type'] in ['PO','ProdOrd']:
+        return status_dict[df['incoming_type']] + (f" {df['arrival_date'].strftime('%d.%m.%Y')} tarihinde gelmesi bekleniyor")
+    else :
+        return status_dict[df['incoming_type']]
+
+
     
 
 sorted_req_data['stock_status']= sorted_req_data.apply(stock_calculation,axis=1)
+
+sorted_req_data['status'] = sorted_req_data.apply(assign_status,axis=1)
+
+sorted_req_data['req_date']=sorted_req_data['req_date'].dt.strftime('%d.%m.%Y')
+sorted_req_data['arrival_date']=sorted_req_data['arrival_date'].dt.strftime('%d.%m.%Y')
+
 
 
 sorted_req_data.sort_index().to_excel('resultx.xlsx',index=False)
